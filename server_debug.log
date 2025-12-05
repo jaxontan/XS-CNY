@@ -1,0 +1,17 @@
+C:\Users\yjtan\OneDrive\Desktop\bakkwa\backend\node_modules\node-appwrite\dist\client.js:69
+    if (!endpoint.startsWith("http://") && !endpoint.startsWith("https://")) {
+                  ^
+
+TypeError: Cannot read properties of undefined (reading 'startsWith')
+    at _Client.setEndpoint (C:\Users\yjtan\OneDrive\Desktop\bakkwa\backend\node_modules\node-appwrite\dist\client.js:69:19)
+    at Object.<anonymous> (C:\Users\yjtan\OneDrive\Desktop\bakkwa\backend\server.js:18:4)
+    at Module._compile (node:internal/modules/cjs/loader:1738:14)
+    at Object..js (node:internal/modules/cjs/loader:1871:10)
+    at Module.load (node:internal/modules/cjs/loader:1470:32)
+    at Module._load (node:internal/modules/cjs/loader:1290:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+
+Node.js v24.5.0
