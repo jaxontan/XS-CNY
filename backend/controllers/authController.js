@@ -8,13 +8,14 @@ const { registerSchema, loginSchema } = require('../utils/validationSchemas');
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET || JWT_SECRET === 'fallback_secret_change_me') {
     console.error('FATAL: JWT_SECRET environment variable must be set to a secure value');
-    if (process.env.NODE_ENV === 'production') {
+    // Always exit if secret is missing or default, even in dev, to enforce security practices
+    if (process.env.NODE_ENV !== 'test') {
         process.exit(1);
     }
 }
 
 const generateToken = (id) => {
-    return jwt.sign({ id }, JWT_SECRET || 'dev-only-insecure-secret', {
+    return jwt.sign({ id }, JWT_SECRET, {
         expiresIn: '1d'
     });
 };

@@ -89,8 +89,8 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Security Middlewares
-// app.use(xss()); // Sanitize input - DISABLED: Incompatible with Express 5
-// app.use(hpp()); // Prevent HTTP Parameter Pollution - DISABLED: Incompatible with Express 5
+app.use(xss()); // Sanitize input
+app.use(hpp()); // Prevent HTTP Parameter Pollution
 
 // CSRF Protection for state-changing routes
 app.use('/api', verifyCsrf);
@@ -132,7 +132,12 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
+
+module.exports = app;

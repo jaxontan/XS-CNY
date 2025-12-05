@@ -111,6 +111,9 @@ exports.createOrder = async (req, res) => {
         }
         const finalTotal = total + deliveryFee;
 
+        // Generate guest token for guest orders to allow secure retrieval
+        const guestToken = userId.startsWith('guest_') ? require('crypto').randomBytes(32).toString('hex') : null;
+
         // Create order with server-validated data
         const order = await databases.createDocument(
             DB_ID,
@@ -125,7 +128,8 @@ exports.createOrder = async (req, res) => {
                 delivery_method: delivery_method,
                 shipping_address: JSON.stringify(shipping_address),
                 items: JSON.stringify(validatedItems),
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                guest_token: guestToken // Store secret token for guest access
             }
         );
 
@@ -152,7 +156,8 @@ exports.createOrder = async (req, res) => {
             items: validatedItems,
             subtotal: total,
             delivery_fee: deliveryFee,
-            total: finalTotal
+            total: finalTotal,
+            guest_token: guestToken // Return token to client once
         });
     } catch (error) {
         console.error('Create order error:', error);

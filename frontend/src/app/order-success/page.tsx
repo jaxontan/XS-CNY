@@ -9,19 +9,21 @@ import styles from './page.module.css';
 function OrderSuccessContent() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
+    const token = searchParams.get('token'); // Get guest token if available
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (orderId) {
-            orderApi.getOne(orderId)
+            // Pass token to API for secure guest access
+            orderApi.getOne(orderId, token || undefined)
                 .then(setOrder)
                 .catch(() => setOrder(null))
                 .finally(() => setLoading(false));
         } else {
             setLoading(false);
         }
-    }, [orderId]);
+    }, [orderId, token]);
 
     return (
         <div className={styles.page}>

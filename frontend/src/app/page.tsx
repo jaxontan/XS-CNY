@@ -7,7 +7,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <span className={styles.heroEmoji}>🧧</span>
+          <span className={styles.heroEmoji}>🧨 🧧 🍊</span>
           <h1 className={styles.heroTitle}>
             Celebrate CNY with <span className={styles.highlight}>Premium Bakkwa</span>
           </h1>
