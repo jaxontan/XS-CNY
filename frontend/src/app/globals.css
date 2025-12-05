@@ -91,7 +91,7 @@ a {
   text-decoration: none;
 }
 
-/* Premium Background Pattern */
+/* Premium Background Pattern - Enhanced for CNY */
 body::before {
   content: '';
   position: fixed;
@@ -99,12 +99,21 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
+  background-color: var(--cny-cream);
   background-image:
-    radial-gradient(circle at 10% 20%, var(--cny-red-glow) 0%, transparent 25%),
-    radial-gradient(circle at 90% 80%, var(--cny-gold-glow) 0%, transparent 30%),
-    radial-gradient(circle at 50% 50%, rgba(255, 248, 231, 0.5) 0%, transparent 60%);
+    radial-gradient(circle at 100% 150%, var(--cny-red-glow) 24%, transparent 25%),
+    radial-gradient(circle at 0% 150%, var(--cny-red-glow) 24%, transparent 25%),
+    radial-gradient(circle at 50% 100%, var(--cny-gold-glow) 10%, transparent 11%),
+    radial-gradient(circle at 100% 50%, var(--cny-gold-glow) 5%, transparent 6%),
+    radial-gradient(circle at 0% 50%, var(--cny-gold-glow) 5%, transparent 6%),
+    radial-gradient(circle at 100% 100%, var(--cny-red-glow) 10%, transparent 11%),
+    radial-gradient(circle at 0% 100%, var(--cny-red-glow) 10%, transparent 11%),
+    radial-gradient(circle at 10% 20%, rgba(212, 36, 60, 0.1) 0%, transparent 25%),
+    radial-gradient(circle at 90% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 30%);
+  background-size: 60px 60px, 60px 60px, 30px 30px, 30px 30px, 30px 30px, 30px 30px, 30px 30px, 100% 100%, 100% 100%;
   pointer-events: none;
   z-index: -1;
+  opacity: 0.6;
 }
 
 /* Premium Button Styles */
