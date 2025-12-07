@@ -5,16 +5,26 @@ const crypto = require('crypto');
 const { registerSchema, loginSchema } = require('../utils/validationSchemas');
 
 // Enforce JWT_SECRET - fail fast if not set
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET || JWT_SECRET === 'fallback_secret_change_me') {
-    console.error('FATAL: JWT_SECRET environment variable must be set to a secure value');
+const getJwtSecret = () => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret.length < 32) {
+        throw new Error('JWT_SECRET must be set and at least 32 characters');
+    }
+    return secret;
+};
+
+// Fail fast on startup if secret is missing/weak
+try {
+    getJwtSecret();
+} catch (e) {
+    console.error('FATAL:', e.message);
     if (process.env.NODE_ENV === 'production') {
         process.exit(1);
     }
 }
 
 const generateToken = (id) => {
-    return jwt.sign({ id }, JWT_SECRET || 'dev-only-insecure-secret', {
+    return jwt.sign({ id }, getJwtSecret(), {
         expiresIn: '1d'
     });
 };

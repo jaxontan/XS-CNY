@@ -64,7 +64,9 @@ export default function CheckoutPage() {
             });
 
             clearCart();
-            router.push(`/order-success?orderId=${order.$id}`);
+            // Pass guest token if available
+            const query = order.guest_token ? `?orderId=${order.$id}&guest_token=${order.guest_token}` : `?orderId=${order.$id}`;
+            router.push(`/order-success${query}`);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Order failed. Please try again.');
         } finally {

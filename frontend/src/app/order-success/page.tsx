@@ -9,19 +9,20 @@ import styles from './page.module.css';
 function OrderSuccessContent() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
+    const guestToken = searchParams.get('guest_token') || undefined;
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (orderId) {
-            orderApi.getOne(orderId)
+            orderApi.getOne(orderId, guestToken)
                 .then(setOrder)
                 .catch(() => setOrder(null))
                 .finally(() => setLoading(false));
         } else {
             setLoading(false);
         }
-    }, [orderId]);
+    }, [orderId, guestToken]);
 
     return (
         <div className={styles.page}>

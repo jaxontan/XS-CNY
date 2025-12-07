@@ -104,6 +104,7 @@ export interface Order {
     delivery_method: 'delivery' | 'pickup';
     total: number;
     status: string;
+    guest_token?: string; // Optional token for guest access
 }
 
 // API functions
@@ -135,6 +136,8 @@ export const orderApi = {
         api<Order>('/orders', { method: 'POST', body: data }),
     // BUG-001 FIX: Correct route path
     getMyOrders: () => api<Order[]>('/orders/my-orders'),
-    getOne: (id: string) => api<Order>(`/orders/${id}`),
+    getOne: (id: string, guestToken?: string) => {
+        const query = guestToken ? `?guest_token=${guestToken}` : '';
+        return api<Order>(`/orders/${id}${query}`);
+    },
 };
-
