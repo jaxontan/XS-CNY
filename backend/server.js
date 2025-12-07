@@ -3,10 +3,12 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const xss = require('xss-clean');
+const xssSanitizer = require('./middleware/xssMiddleware');
 const cookieParser = require('cookie-parser');
-const sdk = require('node-appwrite');
 const hpp = require('hpp');
+
+// Use mock appwrite if specified (e.g. for testing)
+const sdk = process.env.MOCK_APPWRITE === 'true' ? require('./mockAppwrite') : require('node-appwrite');
 
 const { verifyCsrf } = require('./middleware/csrfMiddleware');
 
@@ -14,10 +16,12 @@ const app = express();
 
 // Appwrite Client Setup
 const client = new sdk.Client();
-client
-  .setEndpoint(process.env.APPWRITE_ENDPOINT)
-  .setProject(process.env.APPWRITE_PROJECT_ID)
-  .setKey(process.env.APPWRITE_API_KEY);
+if (process.env.MOCK_APPWRITE !== 'true') {
+  client
+    .setEndpoint(process.env.APPWRITE_ENDPOINT)
+    .setProject(process.env.APPWRITE_PROJECT_ID)
+    .setKey(process.env.APPWRITE_API_KEY);
+}
 
 const databases = new sdk.Databases(client);
 const users = new sdk.Users(client);
@@ -89,8 +93,8 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Security Middlewares
-// app.use(xss()); // Sanitize input - DISABLED: Incompatible with Express 5
-// app.use(hpp()); // Prevent HTTP Parameter Pollution - DISABLED: Incompatible with Express 5
+app.use(xssSanitizer); // Sanitize input (Custom middleware for Express 5)
+app.use(hpp()); // Prevent HTTP Parameter Pollution
 
 // CSRF Protection for state-changing routes
 app.use('/api', verifyCsrf);
@@ -135,4 +139,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  if (process.env.MOCK_APPWRITE === 'true') {
+    console.log('Running with MOCK Appwrite');
+  }
 });

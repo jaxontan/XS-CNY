@@ -1,5 +1,6 @@
 const sdk = require('node-appwrite');
 const { z } = require('zod');
+const crypto = require('crypto');
 
 const DB_ID = 'bakkwa_store';
 const COLLECTION_ID = 'orders';
@@ -58,6 +59,12 @@ exports.createOrder = async (req, res) => {
         const userEmail = req.user?.email || guest_email || 'guest@checkout.com';
         const userName = req.user?.name || guest_name || 'Guest';
 
+        // Generate secure guest token for guest orders
+        let guestToken = null;
+        if (!req.user) {
+            guestToken = crypto.randomBytes(32).toString('hex');
+        }
+
         const { databases } = req.app.get('appwrite');
 
         // SECURITY: Fetch real prices from database - NEVER trust client prices
@@ -112,21 +119,27 @@ exports.createOrder = async (req, res) => {
         const finalTotal = total + deliveryFee;
 
         // Create order with server-validated data
+        const orderData = {
+            user_id: userId,
+            subtotal: total,
+            delivery_fee: deliveryFee,
+            total: finalTotal,
+            status: 'pending',
+            delivery_method: delivery_method,
+            shipping_address: JSON.stringify(shipping_address),
+            items: JSON.stringify(validatedItems),
+            created_at: new Date().toISOString()
+        };
+
+        if (guestToken) {
+            orderData.guest_token = guestToken;
+        }
+
         const order = await databases.createDocument(
             DB_ID,
             COLLECTION_ID,
             sdk.ID.unique(),
-            {
-                user_id: userId,
-                subtotal: total,
-                delivery_fee: deliveryFee,
-                total: finalTotal,
-                status: 'pending',
-                delivery_method: delivery_method,
-                shipping_address: JSON.stringify(shipping_address),
-                items: JSON.stringify(validatedItems),
-                created_at: new Date().toISOString()
-            }
+            orderData
         );
 
         // BUG-002 FIX: Deduct stock after order creation
@@ -146,14 +159,23 @@ exports.createOrder = async (req, res) => {
             }
         }
 
-        res.status(201).json({
+        // Prepare response
+        const response = {
             ...order,
             shipping_address: shipping_address,
             items: validatedItems,
             subtotal: total,
             delivery_fee: deliveryFee,
             total: finalTotal
-        });
+        };
+
+        // Only return guest_token for the creator immediately after creation
+        if (guestToken) {
+            response.guest_token = guestToken;
+        }
+
+        res.status(201).json(response);
+
     } catch (error) {
         console.error('Create order error:', error);
         res.status(500).json({ message: 'Server Error' });
@@ -188,8 +210,11 @@ exports.getMyOrders = async (req, res) => {
                 console.error('Failed to parse items:', order.$id);
             }
 
+            // Never return guest_token in list
+            const { guest_token, ...safeOrder } = order;
+
             return {
-                ...order,
+                ...safeOrder,
                 shipping_address,
                 items
             };
@@ -211,12 +236,16 @@ exports.getOrder = async (req, res) => {
         const order = await databases.getDocument(DB_ID, COLLECTION_ID, id);
 
         // BUG-016 FIX: Security check - users can only view their own orders
-        // Allow: logged-in owner, admin, or guest with order containing their guest ID prefix
+        // Allow: logged-in owner, admin, or guest with VALID guest_token
         const isOwner = req.user && order.user_id === req.user.id;
         const isAdmin = req.user && req.user.role === 'admin';
-        const isGuestOrder = order.user_id.startsWith('guest_') && !req.user;
 
-        if (!isOwner && !isAdmin && !isGuestOrder) {
+        // Strict guest check: must be a guest order AND provide the correct guest_token
+        const isGuestOrder = order.user_id.startsWith('guest_') && !req.user;
+        const guestToken = req.query.guest_token;
+        const isGuestAuthorized = isGuestOrder && guestToken && order.guest_token === guestToken;
+
+        if (!isOwner && !isAdmin && !isGuestAuthorized) {
             return res.status(403).json({ message: 'Access denied' });
         }
 
@@ -236,8 +265,12 @@ exports.getOrder = async (req, res) => {
             console.error('Failed to parse items:', order.$id);
         }
 
+        // Hide guest_token in response unless it was just created (handled in createOrder)
+        // or we can allow it if the user is authorized? No, usually we don't need to return it again.
+        const { guest_token, ...safeOrder } = order;
+
         res.json({
-            ...order,
+            ...safeOrder,
             shipping_address,
             items
         });
